@@ -40,7 +40,7 @@ public class DataServer {
 
         
         //create a server socket on port number args[0]
-        ServerSocket serverSocket = new ServerSocket(mySocket);
+        
 
         //if back send join
         if (!isPrime) {
@@ -50,7 +50,7 @@ public class DataServer {
 
         // Accept incoming client/backup connection
         while (true) {
-
+            ServerSocket serverSocket = new ServerSocket(mySocket);
             Socket clientSocket = serverSocket.accept();
             System.out.println("Client connected!");
             // Setup input and output streams for communication with the client/backup
@@ -60,19 +60,21 @@ public class DataServer {
             // Read message from client/backup
             String message = in.readLine();
             System.out.println("Client says: " + message);
-            if (message == "READ") {
+            if ("READ".equals(message)) {
+                System.out.println("COMPLETE_READ:" + storage);
                 // Send response to the client
-                out.println(storage);
+                out.println("COMPLETE_READ:" + storage);
             } //has more more than 1 input variable
             else {
                 // Declare a string with comma delimiter
                 // Split the string using comma as the delimiter
                 String[] inputVariables = message.split(":");
-                System.out.println(inputVariables[0]);
-                System.out.println(inputVariables[1]);
+                //System.out.println(inputVariables[0]);
+                //System.out.println(inputVariables[1]);
                 if ("WRITE".equals(inputVariables[0])) {
                     if (isPrime = true) {
                         storage = Integer.parseInt(inputVariables[1]);
+                        //update others
                     } 
                     else {
                         //send update request to primary
@@ -91,6 +93,7 @@ public class DataServer {
                 }
             }
             // Close the client socket
+            serverSocket.close();
             clientSocket.close();
         }
 
@@ -126,7 +129,7 @@ public class DataServer {
 
     static void joinToPrime(int backup) {
         int i = 0;
-        System.out.println(backup);
+        //System.out.println(backup);
         while (backups[i] != -1) {
             i++;
         }
