@@ -16,9 +16,9 @@ public class DataServer {
 
     //first argument is port and second(if it exists) is primaries port
     static boolean isPrime = true;
-    static int parent = 0;
+    static int parent = -1;
     static int storage = 0;
-    static int mySocket = 0;
+    static int mySocket = -1;
     static int[] backups = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     public static void main(String args[]) throws IOException {
@@ -45,9 +45,9 @@ public class DataServer {
         //if back send join
         if (!isPrime) {
             oneTimeCommunicate(parent, "JOIN:" + mySocket);
-            System.out.println("Data Server is listening on port " + mySocket);
         }
 
+        System.out.println("Data Server is listening on port " + mySocket);
         // Accept incoming client/backup connection
         while (true) {
             ServerSocket serverSocket = new ServerSocket(mySocket);
@@ -60,25 +60,30 @@ public class DataServer {
             // Read message from client/backup
             String message = in.readLine();
             System.out.println("Client says: " + message);
+            String[] inputVariables = message.split(":");
             if ("READ".equals(message)) {
                 System.out.println("COMPLETE_READ:" + storage);
                 // Send response to the client
                 out.println("COMPLETE_READ:" + storage);
             } //has more more than 1 input variable
-            else {
+            else if (inputVariables.length == 2) {
                 // Declare a string with comma delimiter
                 // Split the string using comma as the delimiter
-                String[] inputVariables = message.split(":");
+                
                 //System.out.println(inputVariables[0]);
                 //System.out.println(inputVariables[1]);
                 if ("WRITE".equals(inputVariables[0])) {
-                    if (isPrime = true) {
+                    if (isPrime) {
                         storage = Integer.parseInt(inputVariables[1]);
                         //update others
+                        updateBackups();
+                        out.println("COMPLETE_WRITE");
                     } 
                     else {
                         //send update request to primary
-                        //oneTimeCommunicate(parent, "UPDATE" + inputVariables[1]);
+                        oneTimeCommunicate(parent, "UPDATE:" + inputVariables[1]);
+                        //respond to client after
+                        out.println("COMPLETE_WRITE");
                     }
                 } 
                 //Prime gests message
@@ -86,11 +91,23 @@ public class DataServer {
                     //System.out.println("JOIN recieve");
                     joinToPrime(Integer.parseInt(inputVariables[1]));
                     out.println("COMPLETE_JOIN");
+                    //updateBackups();
                 } //response for join
                 else if ("JOIN".equals(inputVariables[0]) && inputVariables[1].equals(String.valueOf(mySocket))) {
                     System.out.println("Got response: COMPLETE_JOIN");
                     System.out.println("Data Server is listening on port " + mySocket);
                 }
+                else if ("UPDATE".equals(inputVariables[0])){
+                    if(isPrime){
+                        storage = Integer.parseInt(inputVariables[1]);
+                        out.println("COMPLETE_UPDATE");
+                        updateBackups();
+                    }
+                    else{
+                        storage = Integer.parseInt(inputVariables[1]);
+                        out.println("UPDATE_COMPLETE");
+                    }
+                }   
             }
             // Close the client socket
             serverSocket.close();
@@ -136,5 +153,14 @@ public class DataServer {
 
         backups[i] = backup;
         //oneTimeCommunicate(backup, message);
+    }
+
+    static void updateBackups() {
+        int i = 0;
+        //System.out.println(backup);
+        while (backups[i] != -1) {
+            oneTimeCommunicate(backups[i], "UPDATE:" + storage);
+            i++;
+        }
     }
 }
