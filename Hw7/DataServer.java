@@ -2,6 +2,8 @@
 //source for a lot of stuff
 //https://www.geeksforgeeks.org/how-to-create-a-simple-tcp-client-server-connection-in-java/
 //https://www.w3schools.com/java/java_methods.asp
+//https://www.w3schools.com/java/java_threads.asp
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 //assume that they don't try creating two primary
-public class DataServer {
+public class DataServer extends Thread{
 
     //first argument is port and second(if it exists) is primaries port
     static boolean isPrime = true;
@@ -24,6 +26,10 @@ public class DataServer {
     public static void main(String args[]) throws IOException {
         // put arg in eaiser place
         mySocket = Integer.parseInt(args[0]);
+
+        //set up thread
+        DataServer thread = new DataServer();
+        
 
         //for hard coded testing for debugger
         //mySocket = 5000;
@@ -47,12 +53,17 @@ public class DataServer {
             oneTimeCommunicate(parent, "JOIN:" + mySocket);
         }
 
-        System.out.println("Data Server is listening on port " + mySocket);
+        
         // Accept incoming client/backup connection
         while (true) {
             ServerSocket serverSocket = new ServerSocket(mySocket);
+            System.out.println("Data Server is listening on port " + mySocket);
             Socket clientSocket = serverSocket.accept();
             System.out.println("Client connected!");
+
+            //create thread here
+
+
             // Setup input and output streams for communication with the client/backup
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -162,5 +173,9 @@ public class DataServer {
             oneTimeCommunicate(backups[i], "UPDATE:" + storage);
             i++;
         }
+    }
+
+    public void run(){
+        
     }
 }
